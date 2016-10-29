@@ -10,11 +10,20 @@ const User = require('../models/User');
  */
 exports.getLogin = (req, res) => {
   if (req.user) {
+    console.log("User is logged in: \n");
+    console.log(req.session);
+    return res.send(req.user);
+  }
+    console.log("User is not logged in: \n");
+    console.log(req.session);
+    return res.send({ success: false });
+};
+
+exports.getLog = (req, res) => {
+  if (req.user) {
     return res.redirect('/');
   }
-  res.render('account/login', {
-    title: 'Login'
-  });
+  return res.render('account/login');
 };
 
 /**
@@ -29,20 +38,25 @@ exports.postLogin = (req, res, next) => {
   const errors = req.validationErrors();
 
   if (errors) {
-    req.flash('errors', errors);
-    return res.redirect('/login');
+    // req.flash('errors', errors);
+    console.log(req.headers);    
+    return res.send({ success: false, 
+                      redirect: '/login',
+                      flash: errors });
   }
 
   passport.authenticate('local', (err, user, info) => {
     if (err) { return next(err); }
     if (!user) {
-      req.flash('errors', info);
-      return res.redirect('/login');
+      // req.flash('errors', info);
+      return res.send({ success: false, 
+                        redirect: '/login',
+                        flash: info });
     }
     req.logIn(user, (err) => {
       if (err) { return next(err); }
-      req.flash('success', { msg: 'Success! You are logged in.' });
-      res.redirect(req.session.returnTo || '/');
+      // req.flash('success', { msg: 'Success! You are logged in.' });
+      res.send(req.user);
     });
   })(req, res, next);
 };
@@ -53,21 +67,23 @@ exports.postLogin = (req, res, next) => {
  */
 exports.logout = (req, res) => {
   req.logout();
-  res.redirect('/');
+  res.send({ success: true });
+  console.log("User logged out: \n");
+  console.log(req.session);
 };
 
-/**
- * GET /signup
- * Signup page.
- */
-exports.getSignup = (req, res) => {
-  if (req.user) {
-    return res.redirect('/');
-  }
-  res.render('account/signup', {
-    title: 'Create Account'
-  });
-};
+// /**
+//  * GET /signup
+//  * Signup page.
+//  */
+// exports.getSignup = (req, res) => {
+//   if (req.user) {
+//     return res.redirect('/');
+//   }
+//   res.render('account/signup', {
+//     title: 'Create Account'
+//   });
+// };
 
 /**
  * POST /signup
@@ -82,8 +98,8 @@ exports.postSignup = (req, res, next) => {
   const errors = req.validationErrors();
 
   if (errors) {
-    req.flash('errors', errors);
-    return res.redirect('/signup');
+    // req.flash('errors', errors);
+    return res.send({ success: false, flash: errors});
   }
 
   const user = new User({
@@ -94,8 +110,8 @@ exports.postSignup = (req, res, next) => {
   User.findOne({ email: req.body.email }, (err, existingUser) => {
     if (err) { return next(err); }
     if (existingUser) {
-      req.flash('errors', { msg: 'Account with that email address already exists.' });
-      return res.redirect('/signup');
+      return res.send({ success: false,
+                        flash: 'Account with that email address already exists.' });
     }
     user.save((err) => {
       if (err) { return next(err); }
@@ -103,7 +119,7 @@ exports.postSignup = (req, res, next) => {
         if (err) {
           return next(err);
         }
-        res.redirect('/');
+        res.send(user);
       });
     });
   });
@@ -114,9 +130,11 @@ exports.postSignup = (req, res, next) => {
  * Profile page.
  */
 exports.getAccount = (req, res) => {
-  res.render('account/profile', {
-    title: 'Account Management'
-  });
+  res.render('account/profile');
+};
+
+exports.getAccountInfo = (req, res) => {
+  res.json(req.user);
 };
 
 /**

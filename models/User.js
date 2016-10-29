@@ -1,29 +1,32 @@
 const bcrypt = require('bcrypt-nodejs');
 const crypto = require('crypto');
 const mongoose = require('mongoose');
-
-const userSchema = new mongoose.Schema({
-  email: { type: String, unique: true },
-  password: String,
-  passwordResetToken: String,
+const Schema = mongoose.Schema;
+const userSchema = new Schema({
+  email               : { type: String, unique: true },
+  password            : String,
+  passwordResetToken  : String,
   passwordResetExpires: Date,
 
-  facebook: String,
-  twitter: String,
-  google: String,
-  github: String,
+  facebook : String,
+  twitter  : String,
+  google   : String,
+  github   : String,
   instagram: String,
-  linkedin: String,
-  steam: String,
-  tokens: Array,
+  linkedin : String,
+  steam    : String,
+  tokens   : Array,
 
   profile: {
-    name: String,
-    gender: String,
+    name    : String,
+    gender  : String,
     location: String,
-    website: String,
-    picture: String
-  }
+    website : String,
+    picture : String
+  },
+
+  boards   : [{ type: Schema.Types.ObjectId, ref: 'Board' }]
+
 }, { timestamps: true });
 
 /**
@@ -61,6 +64,15 @@ userSchema.methods.gravatar = function (size = 200) {
   const md5 = crypto.createHash('md5').update(this.email).digest('hex');
   return `https://gravatar.com/avatar/${md5}?s=${size}&d=retro`;
 };
+
+/**
+ * Override method to avoid sending user passwords
+ */
+userSchema.methods.toJSON = function() {
+  var obj = this.toObject();
+  delete obj.password;
+  return obj;
+}
 
 const User = mongoose.model('User', userSchema);
 
