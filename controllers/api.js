@@ -145,13 +145,37 @@ exports.getScraping = (req, res, next) => {
 exports.getGithub = (req, res, next) => {
   const token = req.user.tokens.find(token => token.kind === 'github');
   const github = new GitHub();
-  github.repos.get({ user: 'sahat', repo: 'hackathon-starter' }, (err, repo) => {
-    if (err) { return next(err); }
-    res.render('api/github', {
-      title: 'GitHub API',
-      repo
-    });
+  
+  github.authenticate({
+      type: "oauth",
+      token: token
   });
+  
+  
+  
+  // var Client = require("./../lib/index");
+  // var testAuth = require("./../testAuth.json");
+
+  // var github = new Client({
+  //     debug: true
+  // });
+
+  
+
+  github.repos.getAll({
+      "affiliation": "owner,organization_member"
+  }, function(err, res) {
+      console.log(err, res);
+});
+
+  
+  // github.repos.get({ user: 'sahat', repo: 'hackathon-starter' }, (err, repo) => {
+  //   if (err) { return next(err); }
+  //   res.render('api/github', {
+  //     title: 'GitHub API',
+  //     repo
+  //   });
+  // });
 };
 
 /**

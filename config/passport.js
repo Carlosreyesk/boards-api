@@ -124,7 +124,7 @@ passport.use(new FacebookStrategy({
 passport.use(new GitHubStrategy({
   clientID: process.env.GITHUB_ID,
   clientSecret: process.env.GITHUB_SECRET,
-  callbackURL: '/auth/github/callback',
+  callbackURL: 'http://localhost:5050/auth/github/callback',
   passReqToCallback: true
 }, (req, accessToken, refreshToken, profile, done) => {
   if (req.user) {
