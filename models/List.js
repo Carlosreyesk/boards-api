@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 var listSchema = new Schema({
   _board   : { type: Schema.Types.ObjectId, ref: 'Board' },
+  title    : String,
   cards    : [{ type: Schema.Types.ObjectId, ref: 'Card'}]
 });
 

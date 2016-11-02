@@ -10,12 +10,9 @@ const User = require('../models/User');
  */
 exports.getLogin = (req, res) => {
   if (req.user) {
-    console.log("User is logged in: \n");
-    console.log(req.session);
-    return res.send(req.user);
+    let user = User.findById(req.user._id).populate('boards');
+    return res.send({ success: true, user: user });
   }
-    console.log("User is not logged in: \n");
-    console.log(req.session);
     return res.send({ success: false });
 };
 
@@ -56,7 +53,9 @@ exports.postLogin = (req, res, next) => {
     req.logIn(user, (err) => {
       if (err) { return next(err); }
       // req.flash('success', { msg: 'Success! You are logged in.' });
-      res.send(req.user);
+      let user = User.findById(req.user._id).populate('boards');
+      res.send({ success:true,
+                 user: user });
     });
   })(req, res, next);
 };

@@ -9,6 +9,10 @@
     "start": "node app.js",
     "test": "mocha --reporter spec --timeout 5000"
   },
+  "engine":{
+    "node": "6.8.0",
+    "npm": "3.10.8"
+  },
   "dependencies": {
     "async": "^2.0.1",
     "bcrypt-nodejs": "^0.0.3",

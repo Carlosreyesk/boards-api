@@ -1,7 +1,7 @@
 /**
  * Module dependencies.
  */
-const clientUrl = 'http://localhost:3000';
+const clientUrl = 'http://localhost:8080';
 const angularUrl = clientUrl+'/#/';
 const express = require('express');
 const compression = require('compression');
@@ -36,6 +36,7 @@ const homeController = require('./controllers/home');
 const userController = require('./controllers/user');
 const apiController = require('./controllers/api');
 const contactController = require('./controllers/contact');
+const boardController = require('./controllers/board');
 
 /**
  * API keys and Passport configuration.
@@ -148,6 +149,12 @@ app.post('/account/password', passportConfig.isAuthenticated, userController.pos
 app.post('/account/delete', passportConfig.isAuthenticated, userController.postDeleteAccount);
 app.get('/account/unlink/:provider', passportConfig.isAuthenticated, userController.getOauthUnlink);
 
+app.post('/board', passportConfig.isAuthenticated, boardController.postBoard);
+app.get('/board/:id', passportConfig.isAuthenticated, boardController.getBoard);
+app.get('/boards', passportConfig.isAuthenticated, boardController.getBoards);
+app.post('/list', passportConfig.isAuthenticated, boardController.postList);
+app.post('/card', passportConfig.isAuthenticated, boardController.postCard);
+
 /**
  * API examples routes.
  */
@@ -189,12 +196,13 @@ app.get('/auth/instagram/callback', passport.authenticate('instagram', { failure
   res.redirect(req.session.returnTo || '/');
 });
 app.get('/auth/facebook', passport.authenticate('facebook', { scope: ['email', 'user_location'] }));
-app.get('/auth/facebook/callback', passport.authenticate('facebook', { failureRedirect: angularUrl+'login' }), (req, res) => {
-  res.redirect(angularUrl+'dashboard');
+app.get('/auth/facebook/callback', passport.authenticate('facebook', { failureRedirect: clientUrl+'login' }), (req, res) => {
+  console.log(req);
+  res.redirect(clientUrl+'login/?success=true');
 });
 app.get('/auth/github', passport.authenticate('github'));
 app.get('/auth/github/callback', passport.authenticate('github', { failureRedirect: '/login' }), (req, res) => {
-  res.redirect(angularUrl+'account');
+  res.redirect(clientUrl+'account');
 });
 app.get('/auth/google', passport.authenticate('google', { scope: 'profile email' }));
 app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/login' }), (req, res) => {

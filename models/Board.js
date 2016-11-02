@@ -4,7 +4,7 @@ var boardSchema = Schema({
   _owner   : { type: Schema.Types.ObjectId, ref: 'User' },
   title    : String,
   members  : [{ type: Schema.Types.ObjectId, ref: 'User' }],
-  lists    : [{ type: Schema.Types.ObjectId, ref: 'List' }]
+  columns    : [{ type: Schema.Types.ObjectId, ref: 'List' }]
 });
 
 
