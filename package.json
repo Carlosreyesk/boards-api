@@ -1,9 +1,9 @@
 {
-  "name": "hackathon-starter",
+  "name": "boards-api",
   "version": "4.2.1",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sahat/hackathon-starter.git"
+    "url": "https://github.com/Carlosreyesk/boards-api.git"
   },
   "scripts": {
     "start": "node app.js",
