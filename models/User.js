@@ -25,7 +25,8 @@ const userSchema = new Schema({
     picture : String
   },
 
-  boards   : [{ type: Schema.Types.ObjectId, ref: 'Board' }]
+  boards   : [{ type: Schema.Types.ObjectId, ref: 'Board' }],
+  colabs   : [{ type: Schema.Types.ObjectId, ref: 'Board' }]
 
 }, { timestamps: true });
 

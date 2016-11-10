@@ -150,10 +150,20 @@ app.post('/account/delete', passportConfig.isAuthenticated, userController.postD
 app.get('/account/unlink/:provider', passportConfig.isAuthenticated, userController.getOauthUnlink);
 
 app.post('/board', passportConfig.isAuthenticated, boardController.postBoard);
+app.put('/board', passportConfig.isAuthenticated, boardController.putBoard);
 app.get('/board/:id', passportConfig.isAuthenticated, boardController.getBoard);
 app.get('/boards', passportConfig.isAuthenticated, boardController.getBoards);
 app.post('/list', passportConfig.isAuthenticated, boardController.postList);
+app.put('/list', passportConfig.isAuthenticated, boardController.putList);
 app.post('/card', passportConfig.isAuthenticated, boardController.postCard);
+app.put('/card', passportConfig.isAuthenticated, boardController.putCard);
+app.get('/card/:id', passportConfig.isAuthenticated, boardController.getCard);
+app.get('/users', passportConfig.isAuthenticated, userController.getAll);
+app.post('/comment', passportConfig.isAuthenticated, boardController.postComment);
+app.post('/member', passportConfig.isAuthenticated, userController.postMember);
+app.get('/members/:id', passportConfig.isAuthenticated, userController.getMembers);
+app.get('/labels/:id', passportConfig.isAuthenticated, boardController.getLabels);
+app.post('/label', passportConfig.isAuthenticated, boardController.postLabel);
 
 /**
  * API examples routes.

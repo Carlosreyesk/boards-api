@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const passport = require('passport');
 const User = require('../models/User');
+const Board = require('../models/Board');
 
 /**
  * GET /login
@@ -10,10 +11,13 @@ const User = require('../models/User');
  */
 exports.getLogin = (req, res) => {
   if (req.user) {
-    let user = User.findById(req.user._id).populate('boards');
-    return res.send({ success: true, user: user });
+    User.findById(req.user._id).populate('boards')
+    .exec(function(err, user){
+      return res.send({ success: true, user: req.user });
+    });
+  }else{
+    return res.send({ success: false });    
   }
-    return res.send({ success: false });
 };
 
 exports.getLog = (req, res) => {
@@ -53,9 +57,8 @@ exports.postLogin = (req, res, next) => {
     req.logIn(user, (err) => {
       if (err) { return next(err); }
       // req.flash('success', { msg: 'Success! You are logged in.' });
-      let user = User.findById(req.user._id).populate('boards');
       res.send({ success:true,
-                 user: user });
+                 user: req.user });
     });
   })(req, res, next);
 };
@@ -71,6 +74,60 @@ exports.logout = (req, res) => {
   console.log(req.session);
 };
 
+exports.getAll = (req, res) => {
+  User.find({})
+  .exec(function(err, users){
+      if (err) { return next(err); }
+      return res.send({ success: true, users: users });
+  });
+}
+
+exports.postMember = (req, res) => {
+  User.findOne({ _id: req.body.user._id })
+  .exec(function(err, user){
+    if (err) { console.log(err); return next(err); }
+    let repeted = false;
+    user.colabs.forEach(function(colab){
+      if(colab == req.body.boardId){
+        repeted = true;
+      }
+    });
+    if(!repeted){
+      user.colabs.push(req.body.boardId);
+      user.save();
+      Board.findOne({ _id: req.body.boardId })
+      .exec(function(err, board){
+        if (err) { return next(err); }
+        let repeat = false;
+        board.members.forEach(function(member){
+          if(member == req.body.user._id){
+            repeat = true;
+          }
+        });
+        if(!repeat){
+          board.members.push(req.body.user._id);
+          board.save();
+          return res.send({ success: true });
+        }else{
+          return res.send({ success: false, flash: 'Repeated record' });          
+        }
+      });
+    }else{
+      return res.send({ success: false, flash: 'Repeated record' });    
+    }
+  });
+}
+
+exports.getMembers = (req, res) => {
+    if(req.user){
+        Board.findOne({ _id: req.params.id })
+        .populate('members')
+        .exec(function(err, board){
+          if (err) { return next(err); }
+          return res.send({ success: true, members: board.members });
+        });
+    }
+}
 // /**
 //  * GET /signup
 //  * Signup page.
