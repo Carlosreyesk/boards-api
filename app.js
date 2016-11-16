@@ -121,7 +121,7 @@ app.use(function(req, res, next) {
   res.setHeader("Access-Control-Allow-Credentials","true");
   res.setHeader("Access-Control-Expose-Headers", "Set-Cookie");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, x-xsrf-token, X-Requested-With, Accept, Expires, Last-Modified, Cache-Control");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS, DELETE");
   
   next();
 });
@@ -161,8 +161,10 @@ app.get('/card/:id', passportConfig.isAuthenticated, boardController.getCard);
 app.get('/users', passportConfig.isAuthenticated, userController.getAll);
 app.post('/comment', passportConfig.isAuthenticated, boardController.postComment);
 app.post('/member', passportConfig.isAuthenticated, userController.postMember);
+app.delete('/member/:memberid/board/:boardid', passportConfig.isAuthenticated, userController.deleteMember);
 app.get('/members/:id', passportConfig.isAuthenticated, userController.getMembers);
 app.get('/labels/:id', passportConfig.isAuthenticated, boardController.getLabels);
+app.delete('/label/:id', passportConfig.isAuthenticated, boardController.deleteLabel);
 app.post('/label', passportConfig.isAuthenticated, boardController.postLabel);
 
 /**

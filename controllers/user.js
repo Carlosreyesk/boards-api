@@ -12,11 +12,11 @@ const Board = require('../models/Board');
 exports.getLogin = (req, res) => {
   if (req.user) {
     User.findById(req.user._id).populate('boards')
-    .exec(function(err, user){
-      return res.send({ success: true, user: req.user });
-    });
-  }else{
-    return res.send({ success: false });    
+      .exec(function (err, user) {
+        return res.send({ success: true, user: req.user });
+      });
+  } else {
+    return res.send({ success: false });
   }
 };
 
@@ -40,25 +40,31 @@ exports.postLogin = (req, res, next) => {
 
   if (errors) {
     // req.flash('errors', errors);
-    console.log(req.headers);    
-    return res.send({ success: false, 
-                      redirect: '/login',
-                      flash: errors });
+    console.log(req.headers);
+    return res.send({
+      success: false,
+      redirect: '/login',
+      flash: errors
+    });
   }
 
   passport.authenticate('local', (err, user, info) => {
     if (err) { return next(err); }
     if (!user) {
       // req.flash('errors', info);
-      return res.send({ success: false, 
-                        redirect: '/login',
-                        flash: info });
+      return res.send({
+        success: false,
+        redirect: '/login',
+        flash: info
+      });
     }
     req.logIn(user, (err) => {
       if (err) { return next(err); }
       // req.flash('success', { msg: 'Success! You are logged in.' });
-      res.send({ success:true,
-                 user: req.user });
+      res.send({
+        success: true,
+        user: req.user
+      });
     });
   })(req, res, next);
 };
@@ -76,58 +82,84 @@ exports.logout = (req, res) => {
 
 exports.getAll = (req, res) => {
   User.find({})
-  .exec(function(err, users){
+    .exec(function (err, users) {
       if (err) { return next(err); }
       return res.send({ success: true, users: users });
-  });
+    });
 }
 
 exports.postMember = (req, res) => {
+  console.log(req.body.user._id);
   User.findOne({ _id: req.body.user._id })
-  .exec(function(err, user){
-    if (err) { console.log(err); return next(err); }
-    let repeted = false;
-    user.colabs.forEach(function(colab){
-      if(colab == req.body.boardId){
-        repeted = true;
-      }
-    });
-    if(!repeted){
-      user.colabs.push(req.body.boardId);
-      user.save();
-      Board.findOne({ _id: req.body.boardId })
-      .exec(function(err, board){
-        if (err) { return next(err); }
-        let repeat = false;
-        board.members.forEach(function(member){
-          if(member == req.body.user._id){
-            repeat = true;
+    .exec(function (err, user) {
+      if (err) { console.log(err); return next(err); }
+      let repeted = false;
+      if (user) {
+        user.colabs.forEach(function (colab) {
+          if (colab == req.body.boardId) {
+            repeted = true;
           }
         });
-        if(!repeat){
-          board.members.push(req.body.user._id);
-          board.save();
-          return res.send({ success: true });
-        }else{
-          return res.send({ success: false, flash: 'Repeated record' });          
+        if (!repeted) {
+          user.colabs.push(req.body.boardId);
+          user.save();
+          Board.findOne({ _id: req.body.boardId })
+            .exec(function (err, board) {
+              if (err) { return next(err); }
+              let repeat = false;
+              board.members.forEach(function (member) {
+                if (member == req.body.user._id) {
+                  repeat = true;
+                }
+              });
+              if (!repeat) {
+                board.members.push(req.body.user._id);
+                board.save();
+                return res.send({ success: true });
+              } else {
+                return res.send({ success: false, flash: 'Repeated record' });
+              }
+            });
+        } else {
+          return res.send({ success: false, flash: 'Repeated record' });
         }
-      });
-    }else{
-      return res.send({ success: false, flash: 'Repeated record' });    
-    }
-  });
+      }
+    });
 }
 
 exports.getMembers = (req, res) => {
-    if(req.user){
-        Board.findOne({ _id: req.params.id })
-        .populate('members')
+  if (req.user) {
+    Board.findOne({ _id: req.params.id })
+      .populate('members')
+      .exec(function (err, board) {
+        if (err) { return next(err); }
+        return res.send({ success: true, members: board.members });
+      });
+  }
+}
+
+exports.deleteMember = (req, res) =>{
+    if(req.user) {
+        let deletedMember = req.params.memberid;
+        let boardId = req.params.boardid;
+        Board.findOne({ _id: boardId })
         .exec(function(err, board){
-          if (err) { return next(err); }
-          return res.send({ success: true, members: board.members });
+                if (err) { console.log(err); return next(err); };
+                console.log(board.members);
+                 let newMembers = [];
+                 board.members.forEach(function(member){
+                    if(member.toString() != deletedMember){
+                        newMembers.push(member);
+                    }
+                });
+                console.log(newMembers);
+                board.members = newMembers;
+                board.save();
+                return res.send({ success: true });
         });
     }
 }
+
 // /**
 //  * GET /signup
 //  * Signup page.
@@ -155,7 +187,7 @@ exports.postSignup = (req, res, next) => {
 
   if (errors) {
     // req.flash('errors', errors);
-    return res.send({ success: false, flash: errors});
+    return res.send({ success: false, flash: errors });
   }
 
   const user = new User({
@@ -166,8 +198,10 @@ exports.postSignup = (req, res, next) => {
   User.findOne({ email: req.body.email }, (err, existingUser) => {
     if (err) { return next(err); }
     if (existingUser) {
-      return res.send({ success: false,
-                        flash: 'Account with that email address already exists.' });
+      return res.send({
+        success: false,
+        flash: 'Account with that email address already exists.'
+      });
     }
     user.save((err) => {
       if (err) { return next(err); }

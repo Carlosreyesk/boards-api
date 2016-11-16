@@ -70,7 +70,8 @@ exports.putBoard = (req, res) => {
              Board.findOne({ _id: req.body.board._id })
             .populate({
                 path: 'columns',
-                populate: { path: 'cards' }
+                populate: { path: 'cards',
+                            populate: { path: 'labels members'} }
             })
             .populate({
                 path: 'members'
@@ -96,7 +97,8 @@ exports.getBoard = (req, res) => {
         Board.findOne({ _id: req.params.id })
             .populate({
                 path: 'columns',
-                populate: { path: 'cards' }
+                populate: { path: 'cards',
+                            populate: { path: 'labels members' } }
             })
             .populate({
                 path: 'members'
@@ -206,6 +208,34 @@ exports.postLabel = (req, res) => {
     }
 }
 
+exports.deleteLabel = (req, res) =>{
+    if(req.user) {
+        let deletedId = req.params.id;
+        Label.findOne({ _id: deletedId })
+        .exec(function(err, label){
+            if (err) { console.log(err); return next(err); };
+            console.log(label);
+            Board.findOne({ _id: label._board })
+            .exec(function(err, board){
+                if (err) { console.log(err); return next(err); };
+                console.log(board);
+                let newLabels = [];
+                board.labels.forEach(function(doc){
+                    let found = false;
+                    if(doc.toString() != label._id.toString()){
+                        newLabels.push(doc);
+                    }
+                });
+                board.labels = newLabels;
+                console.log(newLabels);
+                board.save();
+                label.remove();
+                return res.send({ success: true });
+            });
+        });
+    }
+}
+
 exports.getLabels = (req, res) => {
     if (req.user) {
         Label.find({ _board: req.params.id })
@@ -221,7 +251,7 @@ exports.getLabels = (req, res) => {
 exports.putList = (req, res) => {
     if (req.user) {
         List.findOne({ _id: req.body.list._id })
-            .populate('cards')
+            .populate({ path: 'cards', populate: { path: 'labels members' }})
             .exec(function (err, list) {
                 if (err) { console.log(err); return next(err); };
                 list.title = req.body.list.title;
