@@ -1,8 +1,7 @@
 /**
  * Module dependencies.
  */
-const clientUrl = 'http://localhost:8080';
-const angularUrl = clientUrl+'/#/';
+const clientUrl = 'http://localhost:8080'
 const express = require('express');
 const compression = require('compression');
 const session = require('express-session');
@@ -22,7 +21,20 @@ const expressValidator = require('express-validator');
 const expressStatusMonitor = require('express-status-monitor');
 const sass = require('node-sass-middleware');
 const multer = require('multer');
-const upload = multer({ dest: path.join(__dirname, 'uploads') });
+const crypto = require('crypto');
+
+const storage = multer.diskStorage({
+  destination: './public/images',
+  filename: function (req, file, cb) {
+    crypto.pseudoRandomBytes(16, function (err, raw) {
+      if (err) return cb(err)
+
+      cb(null, raw.toString('hex') + path.extname(file.originalname))
+    })
+  }
+})
+
+const upload = multer({storage: storage});
 
 /**
  * Load environment variables from .env file, where API keys and passwords are configured.
@@ -91,6 +103,7 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(flash());
+
 // app.use((req, res, next) => {
 //   if (req.path === '/api/upload') {
 //     next();
@@ -155,9 +168,13 @@ app.get('/board/:id', passportConfig.isAuthenticated, boardController.getBoard);
 app.get('/boards', passportConfig.isAuthenticated, boardController.getBoards);
 app.post('/list', passportConfig.isAuthenticated, boardController.postList);
 app.put('/list', passportConfig.isAuthenticated, boardController.putList);
+app.delete('/list/:id', passportConfig.isAuthenticated, boardController.deleteList);
+app.delete('/card/:cardid/label/:labelid', passportConfig.isAuthenticated, boardController.deleteLabelFromCard);
+app.get('/card/:cardid/labels', passportConfig.isAuthenticated, boardController.getLabelsFormCard);
 app.post('/card', passportConfig.isAuthenticated, boardController.postCard);
 app.put('/card', passportConfig.isAuthenticated, boardController.putCard);
 app.get('/card/:id', passportConfig.isAuthenticated, boardController.getCard);
+app.delete('/card/:id', passportConfig.isAuthenticated, boardController.deleteCard);
 app.get('/users', passportConfig.isAuthenticated, userController.getAll);
 app.post('/comment', passportConfig.isAuthenticated, boardController.postComment);
 app.post('/member', passportConfig.isAuthenticated, userController.postMember);
@@ -166,7 +183,9 @@ app.get('/members/:id', passportConfig.isAuthenticated, userController.getMember
 app.get('/labels/:id', passportConfig.isAuthenticated, boardController.getLabels);
 app.delete('/label/:id', passportConfig.isAuthenticated, boardController.deleteLabel);
 app.post('/label', passportConfig.isAuthenticated, boardController.postLabel);
-
+app.post('/account/upload', passportConfig.isAuthenticated, upload.single('profilePicture'), userController.postProfilePictureUpload);
+app.put('/account', passportConfig.isAuthenticated, userController.putUpdateUser);
+app.get('/user',passportConfig.isAuthenticated, userController.getUser)
 /**
  * API examples routes.
  */
@@ -208,9 +227,9 @@ app.get('/auth/instagram/callback', passport.authenticate('instagram', { failure
   res.redirect(req.session.returnTo || '/');
 });
 app.get('/auth/facebook', passport.authenticate('facebook', { scope: ['email', 'user_location'] }));
-app.get('/auth/facebook/callback', passport.authenticate('facebook', { failureRedirect: clientUrl+'login' }), (req, res) => {
+app.get('/auth/facebook/callback', passport.authenticate('facebook', { failureRedirect: clientUrl+'/login' }), (req, res) => {
   console.log(req);
-  res.redirect(clientUrl+'login/?success=true');
+  res.redirect(clientUrl+'/login/?success=true');
 });
 app.get('/auth/github', passport.authenticate('github'));
 app.get('/auth/github/callback', passport.authenticate('github', { failureRedirect: '/login' }), (req, res) => {
@@ -249,6 +268,7 @@ app.get('/auth/pinterest/callback', passport.authorize('pinterest', { failureRed
   res.redirect('/api/pinterest');
 });
 
+app.use('/public', express.static('public'));
 /**
  * Error Handler.
  */

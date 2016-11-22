@@ -38,14 +38,14 @@ exports.putBoard = (req, res) => {
             console.log(board.columns);
             board.columns = [];
             let remainingColCount = req.body.board.columns.length;
-            console.log('remaining: '+remainingColCount);
+            console.log('remaining: ' + remainingColCount);
             console.log(board.columns);
             req.body.board.columns.forEach(function (col, colIndex) {
                 List.findOne({ _id: col._id }).exec(function (err, list) {
                     if (err) { return next(err); }
                     board.columns[colIndex] = list._id;
                     remainingColCount--;
-                    console.log('remaining: '+remainingColCount);
+                    console.log('remaining: ' + remainingColCount);
                     console.log(board.columns);
                     list.cards = [];
                     col.cards.forEach(function (card) {
@@ -56,7 +56,7 @@ exports.putBoard = (req, res) => {
                         })
                     });
                     list.save();
-                    if(remainingColCount==0){
+                    if (remainingColCount == 0) {
                         board.save();
                         console.log(board.columns);
                     }
@@ -66,25 +66,27 @@ exports.putBoard = (req, res) => {
             // console.log(board);
             // return res.send({ success: true, board: board });
         });
-        setTimeout(function(){
-             Board.findOne({ _id: req.body.board._id })
-            .populate({
-                path: 'columns',
-                populate: { path: 'cards',
-                            populate: { path: 'labels members'} }
-            })
-            .populate({
-                path: 'members'
-            })
-            .populate({
-                path: 'labels'
-            })
-            .exec(function (err, board) {
-                if (err) { return next(err); }
-                board.title = req.body.board.title;
-                board.save();
-                return res.send({ success: true, board: board })
-            });
+        setTimeout(function () {
+            Board.findOne({ _id: req.body.board._id })
+                .populate({
+                    path: 'columns',
+                    populate: {
+                        path: 'cards',
+                        populate: { path: 'labels members' }
+                    }
+                })
+                .populate({
+                    path: 'members'
+                })
+                .populate({
+                    path: 'labels'
+                })
+                .exec(function (err, board) {
+                    if (err) { return next(err); }
+                    board.title = req.body.board.title;
+                    board.save();
+                    return res.send({ success: true, board: board })
+                });
         }, 200);
         // Board.update({ _id: req.body.board._id }, { $set: { columns:  }}, callback);
     } else {
@@ -97,8 +99,10 @@ exports.getBoard = (req, res) => {
         Board.findOne({ _id: req.params.id })
             .populate({
                 path: 'columns',
-                populate: { path: 'cards',
-                            populate: { path: 'labels members' } }
+                populate: {
+                    path: 'cards',
+                    populate: { path: 'labels members' }
+                }
             })
             .populate({
                 path: 'members'
@@ -208,31 +212,30 @@ exports.postLabel = (req, res) => {
     }
 }
 
-exports.deleteLabel = (req, res) =>{
-    if(req.user) {
-        let deletedId = req.params.id;
-        Label.findOne({ _id: deletedId })
-        .exec(function(err, label){
-            if (err) { console.log(err); return next(err); };
-            console.log(label);
-            Board.findOne({ _id: label._board })
-            .exec(function(err, board){
+exports.deleteLabel = (req, res) => {
+    if (req.user) {
+        Label.findOne({ _id: req.params.id })
+            .exec(function (err, label) {
                 if (err) { console.log(err); return next(err); };
-                console.log(board);
-                let newLabels = [];
-                board.labels.forEach(function(doc){
-                    let found = false;
-                    if(doc.toString() != label._id.toString()){
-                        newLabels.push(doc);
-                    }
-                });
-                board.labels = newLabels;
-                console.log(newLabels);
-                board.save();
-                label.remove();
-                return res.send({ success: true });
+                console.log(label);
+                Board.findOne({ _id: label._board })
+                    .exec(function (err, board) {
+                        if (err) { console.log(err); return next(err); };
+                        console.log(board);
+                        let newLabels = [];
+                        board.labels.forEach(function (doc) {
+                            let found = false;
+                            if (doc.toString() != label._id.toString()) {
+                                newLabels.push(doc);
+                            }
+                        });
+                        board.labels = newLabels;
+                        console.log(newLabels);
+                        board.save();
+                        label.remove();
+                        return res.send({ success: true });
+                    });
             });
-        });
     }
 }
 
@@ -241,6 +244,7 @@ exports.getLabels = (req, res) => {
         Label.find({ _board: req.params.id })
             .exec(function (err, labels) {
                 if (err) { console.log(err); return next(err); };
+                console.log(labels);
                 return res.send({ success: true, labels: labels });
             });
     } else {
@@ -251,7 +255,7 @@ exports.getLabels = (req, res) => {
 exports.putList = (req, res) => {
     if (req.user) {
         List.findOne({ _id: req.body.list._id })
-            .populate({ path: 'cards', populate: { path: 'labels members' }})
+            .populate({ path: 'cards', populate: { path: 'labels members' } })
             .exec(function (err, list) {
                 if (err) { console.log(err); return next(err); };
                 list.title = req.body.list.title;
@@ -263,6 +267,43 @@ exports.putList = (req, res) => {
     }
 }
 
+exports.deleteLabelFromCard = (req, res) => {
+    if (req.user) {
+        Card.findOne({ _id: req.params.cardid })
+            .exec(function (err, card) {
+                if (err) { console.log(err); return next(err); };
+                console.log(card.labels);
+                let cardLabels = [];
+                card.labels.forEach(function (lab) {
+                    if (lab.toString() != req.params.labelid) {
+                        cardLabels.push(lab);
+                    }
+                })
+                card.labels = cardLabels;
+                card.save();
+                console.log(cardLabels);
+                // Label.findOne({ _id: req.params.labelid })
+                // .exec(function(err, label){
+                //     if (err) { console.log(err); return next(err); };
+                //     console.log(label);
+                // })
+                return res.send({ success: true });
+            })
+    } else {
+        return res.send({ success: false, flash: "Not Authenticated" });
+    }
+}
+
+exports.getLabelsFormCard = (req, res) => {
+    if (req.user) {
+        Card.findOne({ _id: req.params.cardid })
+            .populate({ path: 'labels' })
+            .exec(function (err, card) {
+                if (err) { console.log(err); return next(err); };
+                res.send({ success: true, labels: card.labels });
+            });
+    }
+}
 
 exports.putCard = (req, res) => {
     if (req.user) {
@@ -279,6 +320,11 @@ exports.putCard = (req, res) => {
                         members.push(member._id);
                     });
                     card.members = members;
+                } else {
+                    // console.log('here');
+                    // if(newcard.members.length = 0){
+                    card.members = [];
+                    // }
                 }
                 if (newcard.comments.length > 0 && typeof newcard.comments[0] === 'object') {
                     newcard.comments.forEach(function (comment) {
@@ -296,6 +342,7 @@ exports.putCard = (req, res) => {
                 card.description = newcard.description;
                 card.duedate = newcard.duedate;
                 card.attachments = newcard.attachments;
+                console.log(card);
                 card.save();
                 return res.send({ success: true, card: card });
             });
@@ -321,6 +368,30 @@ exports.postComment = (req, res) => {
     }
 }
 
+exports.deleteCard = (req, res) => {
+    if (req.user) {
+        let deletedId = req.params.id;
+        Card.findOne({ _id: deletedId })
+            .exec(function (err, deletedCard) {
+                // console.log(deletedCard);
+                List.findOne({ _id: deletedCard._list })
+                    .exec(function (err, list) {
+                        let cards = [];
+                        list.cards.forEach(function (card) {
+                            // console.log(card);
+                            if (card.toString() != deletedCard._id) {
+                                cards.push(card);
+                            }
+                        });
+                        list.cards = cards;
+                        list.save();
+                        deletedCard.remove();
+                        return res.send({success: true});
+                    });
+            });
+    }
+}
+
 exports.getCard = (req, res) => {
     if (req.user) {
         Card.findOne({ _id: req.params.id })
@@ -335,5 +406,38 @@ exports.getCard = (req, res) => {
             });
     } else {
         return res.send({ success: false, flash: "Not Authenticated" });
+    }
+}
+
+
+exports.deleteList = (req, res) => {
+    if (req.user) {
+        let deletedId = req.params.id;
+        List.findOne({ _id: deletedId })
+            .populate({ path: 'cards' })
+            .exec(function (err, list) {
+                if (err) { console.log(err); return next(err); };
+                console.log(list._id);
+                Board.findOne({ _id: list._board })
+                    .exec(function (err, board) {
+                        if (err) { console.log(err); return next(err); };
+                        let newCols = [];
+                        console.log(board.columns);
+                        board.columns.forEach(function (col) {
+                            if (col.toString() != list._id) {
+                                newCols.push(col);
+                            }
+                        });
+                        console.log(newCols);
+                        board.columns = newCols;
+                        board.save();
+                        list.cards.forEach(function (card) {
+                            card.remove();
+                        })
+                        list.remove();
+                        return res.send({ success: true });
+                    });
+
+            });
     }
 }
